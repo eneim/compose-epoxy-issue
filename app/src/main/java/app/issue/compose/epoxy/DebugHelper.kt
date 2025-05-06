@@ -13,7 +13,16 @@ import java.lang.ref.WeakReference
 //region Debugging tools
 // Simple instance info.
 val Any.info: String
-    get() = "${this::class.java.simpleName}@${this.hashCode()}"
+    get() = when (this) {
+        is LifecycleOwner -> "${this.fragment?.info} / ${this.lifecycle.currentState}"
+        is Composition -> "\n\t- ${this.javaClass.simpleName}@${this.hashCode()},\n" +
+                "\t- addedToLifecycle=${this.addedToLifecycle?.internalLifecycleOwner?.info}"
+
+        else -> "${this.javaClass.simpleName}@${this.hashCode()}"
+    }
+
+val Fragment.info: String
+    get() = this.toString()
 
 // Debug info for a View, used when it is part of a RecyclerView. View must be attached to Window.
 val View.d: String

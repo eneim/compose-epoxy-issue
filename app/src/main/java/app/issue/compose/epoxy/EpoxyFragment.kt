@@ -1,7 +1,9 @@
 package app.issue.compose.epoxy
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
@@ -10,10 +12,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composition
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.ExperimentalComposeRuntimeApi
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
@@ -21,14 +27,19 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.recyclerview.widget.RecyclerView
 import app.issue.compose.epoxy.databinding.FragmentEpoxyBinding
 import app.issue.compose.epoxy.ui.theme.ComposeEpoxyIssueTheme
 import com.airbnb.epoxy.composeEpoxyModel
 
 class EpoxyFragment : Fragment(R.layout.fragment_epoxy) {
 
+    @ExperimentalComposeRuntimeApi
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val binding = FragmentEpoxyBinding.bind(view)
@@ -51,6 +62,34 @@ class EpoxyFragment : Fragment(R.layout.fragment_epoxy) {
             }
         }
 
+        binding.items.addOnChildAttachStateChangeListener(object :
+            RecyclerView.OnChildAttachStateChangeListener {
+            override fun onChildViewAttachedToWindow(view: View) {
+                // ComposeView.children[0] is an AndroidComposeView.
+                val composition = (view as? ViewGroup)?.getChildAt(0)?.composition
+                // Store the `composition.addedToLifecycle` in the view tag for debugging.
+                if (composition is Composition) {
+                    (view.getTag(R.id.model_tag) as? Lifecycle)
+                        ?: composition.addedToLifecycle?.also {
+                            view.setTag(R.id.model_tag, it)
+                            it.addObserver(object : LifecycleEventObserver {
+                                override fun onStateChanged(
+                                    source: LifecycleOwner,
+                                    event: Lifecycle.Event
+                                ) {
+                                    Log.d(
+                                        "EpoxyFragment",
+                                        "[${composition}] onStateChanged(${source.fragment} / $event)"
+                                    )
+                                }
+                            })
+                        }
+                }
+            }
+
+            override fun onChildViewDetachedFromWindow(view: View) = Unit
+        })
+
         binding.items.withModels {
             repeat(1) { index ->
                 composeEpoxyModel(
@@ -60,11 +99,12 @@ class EpoxyFragment : Fragment(R.layout.fragment_epoxy) {
                     composeFunction = {
                         val currentView = LocalView.current
                         val composition = currentView.composition
+
                         DisposableEffect(Unit) {
-                            debugInfoLiveData.postValue("LocalView: ${currentView.d}\n\nComposition:\n- ${composition?.info}\n\nComposition's container:\n- Fragment=${composition?.fragment},\n- Lifecycle[${composition?.addedToLifecycle?.internalLifecycleOwner?.info}]")
+                            debugInfoLiveData.postValue("LocalView: ${currentView.d}")
 
                             onDispose {
-                                debugInfoLiveData.postValue("(Disposed!)\nLocalView: ${currentView.d}\n\n(Before disposal)\nComposition:\n- ${composition?.info}\n\nComposition's container:\n- Fragment=${composition?.fragment},\n- Lifecycle[${composition?.addedToLifecycle?.internalLifecycleOwner?.info}]")
+                                debugInfoLiveData.postValue("(Disposed!) LocalView: ${currentView.d}\n\n(Last seen) Composition:${composition?.info}")
                             }
                         }
 
@@ -82,8 +122,14 @@ class EpoxyFragment : Fragment(R.layout.fragment_epoxy) {
                                     val lifecycleState by localLifecycle.lifecycle.currentStateFlow
                                         .collectAsState()
 
+                                    val data by remember(localLifecycle, lifecycleState) {
+                                        derivedStateOf {
+                                            "Item[$index]\n-----------\n\nLocalView:${currentView.d}\n\n-----------\n\nLocalLifecycleOwner:\n- [${localLifecycle.info}]"
+                                        }
+                                    }
+
                                     Text(
-                                        text = "Item[$index]\n-----------\n${currentView.d}\n\n-----------\n\nLocalLifecycleOwner: [${localLifecycle.info} / ${lifecycleState}]",
+                                        text = data,
                                         style = TextStyle.Default.copy(fontSize = 12.sp),
                                         fontFamily = FontFamily.Monospace,
                                         modifier = Modifier
