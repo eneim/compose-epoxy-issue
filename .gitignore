@@ -13,3 +13,13 @@
 .externalNativeBuild
 .cxx
 local.properties
+/.idea/appInsightsSettings.xml
+/.idea/deploymentTargetSelector.xml
+/app/src/androidTest/java/app/issue/compose/epoxy/ExampleInstrumentedTest.kt
+/app/src/test/java/app/issue/compose/epoxy/ExampleUnitTest.kt
+/.idea/migrations.xml
+/.idea/misc.xml
+/.idea/dictionaries/nam_nguyen.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/runConfigurations.xml
+/.idea/vcs.xml
