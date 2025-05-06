@@ -1,6 +1,8 @@
-# Demonstrate an issue when using Jetpack Compose with Epoxy library
+# Issues when AndroidComposeView/WrappedComposition are re-used in different Lifecycles
 
-Also: https://kotlinlang.slack.com/archives/CJLTWPH7S/p1746449592633629
+Also: 
+- https://issuetracker.google.com/u/0/issues/415834989
+- https://kotlinlang.slack.com/archives/CJLTWPH7S/p1746449592633629
 
 Demo:
 
