@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Compose Epoxy Issue</string>
+    <item name="model_tag" type="id"/>
+</resources>
