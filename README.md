@@ -29,4 +29,6 @@ https://github.com/user-attachments/assets/716295d8-4b7c-4b1e-8fef-d8c86a4376bd
 |--|--|
 |![Screenshot_20250506_145214](https://github.com/user-attachments/assets/fdff30d7-d1ce-4978-a759-181bfde3203b)|![Screenshot_20250506_145142](https://github.com/user-attachments/assets/9a5636fe-28fc-448f-af1b-07ee057ca5bb)|
 
+- We can see that, the Composition's `addedToLifecycle` is destroyed and it clear the UI accordingly.
+
 - An example of such a scenario: multiple Fragments share an Activity-bound RecycledViewPool, and each Fragment has a RecyclerView whose children are implemented using Jetpack Compose UI. This example is well-known in Apps migrating from RecyclerView-based UI to Compose UI.
